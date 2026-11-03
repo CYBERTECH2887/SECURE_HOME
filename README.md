@@ -132,7 +132,7 @@ The application will automatically initialize the MySQL database/tables and laun
 
 ## 📞 Contact & Support
 
-* **Developed by**: Md Sakir Jalal
+* **Developed by**: Shakir Jalal
 
 
 * **Email**: shakirjalal44@gmail.com
