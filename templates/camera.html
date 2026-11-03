@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% set title = "Live Camera" %}
+{% set header_title = "Real-time Monitoring" %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); gap: 20px;">
+    
+    <section class="panel" style="padding: 10px;">
+        <div style="position: relative; aspect-ratio: 16/9; background: #000; border-radius: 10px; overflow: hidden; border: 1px solid var(--line);">
+            <img id="webcam" src="/api/video_feed" style="width: 100%; height: 100%; object-fit: contain; display: block;" />
+            <div style="position: absolute; top: 15px; left: 15px; right: 15px; display: flex; justify-content: space-between; color: #fff; font-size: 10px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">
+                <span><span style="color: var(--red);">●</span> REC (DEEPFACE ENGINE)</span>
+                <span id="clock">--:--:--</span>
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px; padding: 15px 10px 5px;">
+            <button class="btn btn-primary" onclick="document.getElementById('webcam').src='/api/video_feed';">▶ Start Feed</button>
+            <button class="btn btn-outline" onclick="document.getElementById('webcam').src='';">■ Stop Feed</button>
+        </div>
+    </section>
+
+    <aside class="panel">
+        <h3>System Diagnostics</h3>
+        <p class="muted" style="font-size: 12px;">Real-time backend status.</p>
+        
+        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 12px;">
+            <span class="muted">Video Source</span><b>OpenCV (Local)</b>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 12px;">
+            <span class="muted">Recognition Model</span><b style="color: var(--cyan);">DeepFace</b>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 12px;">
+            <span class="muted">Auto-Alert System</span><b style="color: var(--green);">Active</b>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 12px; background: rgba(99, 230, 226, 0.1); border-left: 3px solid var(--cyan); border-radius: 0 8px 8px 0; font-size: 11px; line-height: 1.6; color: var(--text);">
+            Frames are processed directly by the Flask server. Any unknown face detected continuously for 15 seconds will trigger an automatic database alert and save the image.
+        </div>
+    </aside>
+</div>
+
+<script>
+    setInterval(() => document.getElementById('clock').textContent = new Date().toLocaleTimeString(), 1000);
+</script>
+{% endblock %}
