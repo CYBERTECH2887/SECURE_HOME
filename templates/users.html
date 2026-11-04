@@ -1,0 +1,69 @@
+{% extends "base.html" %}{% set title = "Authorized people" %}{% set header_title = "People the camera should recognise" %}
+{% block top_extra %}<span class="badge ok">{{ users|length }} enrolled</span>{% endblock %}
+{% block content %}
+<div class="grid g-users">
+  <section class="card">
+    <div class="card-head"><div><h3>Add a person</h3><p>Enter their details, then capture {{ enroll_frames }} photos</p></div></div>
+    <form id="userForm" method="POST" action="{{ url_for('add_user') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="field"><label for="nameInput">Full name</label><input name="name" id="nameInput" required maxlength="60" placeholder="For example, Anurag Kumar"></div>
+      <div class="field"><label for="role">Relationship</label><select name="role" id="role" required><option value="">Select</option><option>Home Owner</option><option>Family Member</option><option>Trusted Visitor</option><option>Relative</option><option>Other</option></select></div>
+      <div class="field"><label for="email">Email (optional)</label><input name="email" id="email" type="email"></div>
+      <div class="field"><label>Face capture</label>
+        <div class="vf" style="aspect-ratio:4/3"><span class="vf-b"></span><video id="video" autoplay playsinline muted style="display:none"></video>
+          <div id="placeholder" class="empty" style="position:absolute;inset:0;display:grid;place-content:center">Start the camera to begin</div></div>
+        <canvas id="canvas" hidden></canvas>
+        <div class="progress"><i id="bar"></i></div>
+        <p class="hint" id="status">Face the camera in good light, then slowly turn your head left and right.</p>
+        <div class="row" style="margin-top:12px"><button type="button" class="btn btn-sm" id="camBtn"><svg class="i"><use href="#i-camera"/></svg>Start camera</button>
+          <button type="button" class="btn btn-primary btn-sm" id="capBtn" disabled>Capture {{ enroll_frames }} photos</button></div>
+      </div>
+      <button id="saveBtn" class="btn btn-primary btn-block" type="submit" disabled>Save and train recogniser</button>
+    </form>
+  </section>
+  <section class="card">
+    <div class="card-head"><div><h3>Enrolled people</h3><p>Anyone not on this list is treated as unknown</p></div></div>
+    <div class="stack">
+    {% for u in users %}
+      <article class="person">
+        <div class="avatar">{% if u.photo_path %}<img src="/{{ u.photo_path }}" alt="" onerror="this.remove()">{% endif %}{{ u.name[:1]|upper }}</div>
+        <div style="flex:1;min-width:0"><h3 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.name }}</h3>
+          <p class="muted small">{{ u.email or 'No email' }} · Added {{ u.added }}</p>
+          <div class="row wrap" style="margin-top:6px;gap:6px"><span class="badge {{ 'ok' if u.role == 'Home Owner' else 'info' }}">{{ u.role }}</span><span class="badge">{{ u.samples }} face samples</span></div></div>
+        <form method="POST" action="{{ url_for('delete_user', user_id=u.id) }}" data-confirm="{{ u.name }} will no longer be recognised. Their stored face data is deleted." data-confirm-title="Remove {{ u.name }}?" data-confirm-yes="Remove">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-danger btn-sm" type="submit"><svg class="i"><use href="#i-trash"/></svg>Remove</button></form>
+      </article>
+    {% else %}
+      <div class="empty"><b>No one is enrolled yet</b>Add yourself first so the camera knows who you are.</div>
+    {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const $=id=>document.getElementById(id), TARGET={{ enroll_frames }}, MIN_OK=Math.ceil(TARGET*0.6);
+let stream=null, busy=false;
+const post=(url,body)=>fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':SH.csrf()},body:JSON.stringify(body)});
+$('camBtn').onclick=async()=>{ try{stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640}}});
+  $('video').srcObject=stream; $('video').style.display='block'; $('placeholder').style.display='none'; $('capBtn').disabled=false; $('camBtn').disabled=true;
+}catch(e){toast('Camera access was blocked. Allow it in your browser settings and try again.','bad')}};
+$('capBtn').onclick=async()=>{ if(busy) return; const name=$('nameInput').value.trim();
+  if(!name){toast('Enter the full name first.','bad');$('nameInput').focus();return}
+  busy=true; $('capBtn').disabled=true; $('saveBtn').disabled=true; $('bar').style.width='0';
+  const v=$('video'), c=$('canvas'), s=Math.min(1,480/v.videoWidth); c.width=v.videoWidth*s; c.height=v.videoHeight*s; const ctx=c.getContext('2d');
+  await post('/api/reset_enrollment',{name}); let saved=0, tries=0;
+  while(saved<TARGET && tries<TARGET*3){ ctx.drawImage(v,0,0,c.width,c.height); tries++;
+    let msg=`Captured ${saved} of ${TARGET}. Turn your head slowly.`;
+    try{const r=await (await post('/api/upload_frame',{name,frame_idx:saved,photo_base64:c.toDataURL('image/jpeg',.85)})).json();
+      if(r.status==='saved'){saved++; msg=`Captured ${saved} of ${TARGET}. Turn your head slowly.`} else if(r.reason){msg='Skipped a frame: '+r.reason+'. Keep exactly one face in view.'}}catch(e){}
+    $('bar').style.width=(saved/TARGET*100)+'%'; $('status').textContent=msg;
+    await new Promise(r=>setTimeout(r,120)); }
+  busy=false; $('capBtn').disabled=false;
+  if(saved>=MIN_OK){ if(stream) stream.getTracks().forEach(t=>t.stop()); v.style.display='none'; $('camBtn').disabled=false; $('capBtn').disabled=true;
+    $('status').textContent=`Captured ${saved} clear photos. Click Save and train recogniser.`; $('saveBtn').disabled=false; }
+  else $('status').textContent=`Only ${saved} clear photos were captured. Move closer, add light, and try again.`;
+};
+$('userForm').addEventListener('submit',()=>{$('saveBtn').disabled=true;$('saveBtn').textContent='Training. This can take a minute…'});
+</script>
+{% endblock %}

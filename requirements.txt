@@ -1,0 +1,7 @@
+Flask>=3.0
+mysql-connector-python
+opencv-python
+deepface
+scikit-learn
+numpy
+tf-keras

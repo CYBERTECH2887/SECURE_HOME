@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% set title = "Security logs" %}{% set header_title = "Activity and event history" %}
+{% block top_extra %}<a class="btn btn-sm" href="{{ url_for('export_logs') }}"><svg class="i"><use href="#i-download"/></svg>Export CSV</a>
+{% if logs %}<form method="POST" action="{{ url_for('clear_logs') }}" data-confirm="Every log entry is deleted permanently. Export a CSV first if you need a copy." data-confirm-title="Clear all logs?" data-confirm-yes="Clear logs"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-danger btn-sm"><svg class="i"><use href="#i-trash"/></svg>Clear logs</button></form>{% endif %}{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <div class="search"><svg class="i"><use href="#i-search"/></svg><label class="sr" for="q">Search logs</label><input id="q" placeholder="Search by name or detail"></div>
+  <div class="chips" role="group" aria-label="Filter by event">
+    <button class="chip" data-f="" aria-pressed="true">All</button><button class="chip" data-f="Authorized Entry" aria-pressed="false">Entries</button>
+    <button class="chip" data-f="Alert" aria-pressed="false">Alerts</button><button class="chip" data-f="Admin Action" aria-pressed="false">Admin actions</button><button class="chip" data-f="System Update" aria-pressed="false">System</button></div>
+</div>
+<section class="card" style="padding:0;overflow:hidden"><div class="tscroll"><table>
+  <thead><tr><th>Person</th><th>Time</th><th>Event</th><th>Details</th></tr></thead>
+  <tbody id="rows">
+  {% for l in logs %}<tr data-type="{{ l.type }}" data-text="{{ (l.person ~ ' ' ~ l.details)|lower }}"><td style="font-weight:600">{{ l.person }}</td><td class="muted num">{{ l.time }}</td>
+    <td><span class="badge {{ 'ok' if l.type == 'Authorized Entry' else 'warn' if l.type == 'Alert' else 'info' if l.type == 'Admin Action' else '' }}">{{ l.type }}</span></td><td class="muted">{{ l.details }}</td></tr>
+  {% endfor %}
+  </tbody></table>
+  <div class="empty" id="empty" {% if logs %}hidden{% endif %}><b>{{ 'No matching events' if logs else 'No events yet' }}</b>{{ 'Try a different search or filter.' if logs else 'Entries and alerts appear here as the camera runs.' }}</div></div></section>
+<p class="muted small" style="margin-top:12px"><span id="count">{{ logs|length }}</span> of {{ logs|length }} events shown</p>
+{% endblock %}
+{% block scripts %}
+<script>
+let type=''; const rows=[...document.querySelectorAll('#rows tr')], q=document.getElementById('q');
+function apply(){const t=q.value.trim().toLowerCase(); let n=0; rows.forEach(r=>{const ok=(!type||r.dataset.type===type)&&(!t||r.dataset.text.includes(t)); r.hidden=!ok; n+=ok});
+  document.getElementById('count').textContent=n; document.getElementById('empty').hidden=n>0}
+q.oninput=apply; document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{document.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===c));type=c.dataset.f;apply()});
+</script>
+{% endblock %}

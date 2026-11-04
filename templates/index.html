@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>{% include '_head.html' %}<title>SecureHome · Home security that knows your family</title></head>
+<body>
+{% include '_icons.html' %}
+<header class="land-nav">
+  <a class="brand" href="{{ url_for('index') }}" style="padding:0"><span class="brand-mark"><svg class="i"><use href="#i-shield"/></svg></span>Secure<b>Home</b></a>
+  <div class="row"><button class="btn btn-ghost icon-btn" data-theme-toggle></button><a class="btn" href="{{ url_for('login') }}">Log in</a><a class="btn btn-primary" href="{{ url_for('register') }}">Get started</a></div>
+</header>
+<section class="hero">
+  <div>
+    <h1>Your camera should know your family from a stranger.</h1>
+    <p class="lead">SecureHome watches your webcam, recognises the people you have approved, and emails you a photo when someone unknown stays in view. Everything runs on your own computer, with no cloud service.</p>
+    <div class="row wrap"><a class="btn btn-primary" href="{{ url_for('register') }}" style="padding:13px 22px">Create a workspace</a><a class="btn" href="#how" style="padding:13px 22px">See how it works</a></div>
+  </div>
+  <div class="vf" style="aspect-ratio:4/3"><span class="vf-b"></span>
+    <div class="vf-hud"><span><span class="rec">●</span> Live</span><span>Front door</span></div>
+    <div class="demo" style="position:absolute;inset:0;margin:0;max-width:none">
+      <div class="face" style="left:14%;top:26%;width:30%;height:44%;border-color:var(--ok)"><span class="tag" style="background:var(--ok)">Mum · 97%</span></div>
+      <div class="face" style="left:58%;top:34%;width:26%;height:38%;border-color:var(--bad)"><span class="tag" style="background:var(--bad)">Unknown · 12s</span></div>
+    </div>
+  </div>
+</section>
+<section class="section" id="how">
+  <h2>How it works</h2><p class="muted">Three steps, and the first two take a minute each.</p>
+  <div class="steps">
+    <div class="card"><h3>Add your people</h3><p class="muted small" style="margin-top:6px">Look at the webcam while SecureHome takes 50 photos. It only keeps frames with exactly one clear face.</p></div>
+    <div class="card"><h3>Start the live camera</h3><p class="muted small" style="margin-top:6px">Known people get a green frame and are logged. Strangers get a red one with a timer.</p></div>
+    <div class="card"><h3>Get the alert</h3><p class="muted small" style="margin-top:6px">After a stranger stays in view for {{ unknown_seconds }} seconds you get an email with their photo, and an entry in your dashboard.</p></div>
+  </div>
+</section>
+<section class="section">
+  <h2>Built to run at home</h2>
+  <div class="feat">
+    <div class="card"><h3>Offline recognition</h3><p class="muted small" style="margin-top:6px">ArcFace face embeddings and an SVM classifier run locally, and no images are sent to a third party. The first run needs internet once to download the face model.</p></div>
+    <div class="card"><h3>Two-step matching</h3><p class="muted small" style="margin-top:6px">A face is classified, then checked against the stored faces of that person. This helps, but it is not perfect. See the limitations below.</p></div>
+    <div class="card"><h3>One activity history</h3><p class="muted small" style="margin-top:6px">Every entry, alert and admin action is logged. Search it, filter it, and export it as a CSV file.</p></div>
+    <div class="card"><h3>Private to you</h3><p class="muted small" style="margin-top:6px">Passwords are hashed, email codes expire, and each admin can only see their own photos.</p></div>
+  </div>
+</section>
+<section class="section" id="limitations">
+  <div class="row" style="gap:12px;margin-bottom:6px"><h2 style="margin:0">Known limitations</h2><span class="badge warn">Please read</span></div>
+  <p class="muted">SecureHome is a student project. This is what it cannot do well yet.</p>
+  <div class="card" style="margin-top:22px;border-left:4px solid var(--warn)">
+    <h3>Works best with several people enrolled</h3><p class="muted small" style="margin-top:6px">With only one person enrolled, the system has nobody to compare against and can label every visitor as that person. Enrol 5 to 6 people or more to get a reliable split between known and unknown.</p>
+  </div>
+  <div class="feat">
+    <div class="card"><h3>Lookalikes can be confused</h3><p class="muted small" style="margin-top:6px">Relatives, siblings and people who look alike may be matched to each other, especially with few enrolment photos.</p></div>
+    <div class="card"><h3>Needs a clear, front-facing view</h3><p class="muted small" style="margin-top:6px">Face detection is the classic OpenCV Haar method. Side angles, masks, caps, sunglasses, dark rooms and faces far from the camera are often missed.</p></div>
+    <div class="card"><h3>No protection against photo spoofing</h3><p class="muted small" style="margin-top:6px">There is no liveness check, so a photo or phone screen showing an enrolled person may be accepted as that person.</p></div>
+    <div class="card"><h3>Only watches while the camera page is open</h3><p class="muted small" style="margin-top:6px">Monitoring runs while the server is on and the Live camera page is open. It is not a 24/7 background service.</p></div>
+    <div class="card"><h3>One local webcam</h3><p class="muted small" style="margin-top:6px">It reads a webcam attached to the computer running the server. IP cameras, CCTV and RTSP streams are not supported.</p></div>
+    <div class="card"><h3>Email alerts need internet and setup</h3><p class="muted small" style="margin-top:6px">Alerts and verification codes need a Gmail account with an app password and a working internet connection.</p></div>
+    <div class="card"><h3>Speed depends on your computer</h3><p class="muted small" style="margin-top:6px">Recognition runs on the CPU. Older laptops may show a lower frame rate or a delay before a name appears.</p></div>
+    <div class="card"><h3>Not hardened for the internet</h3><p class="muted small" style="margin-top:6px">It uses the Flask development server without HTTPS. Run it on your home network only, and do not expose it publicly.</p></div>
+    <div class="card"><h3>A learning project, not a certified alarm</h3><p class="muted small" style="margin-top:6px">SecureHome is for study and demonstration. Do not rely on it as your only security system.</p></div>
+  </div>
+</section>
+<footer class="foot">SecureHome &copy; {{ year }} · Built by Md Sakir Jalal · <a href="mailto:shakirjalal44@gmail.com" style="color:var(--accent)">shakirjalal44@gmail.com</a></footer>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body></html>

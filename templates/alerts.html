@@ -1,0 +1,34 @@
+{% extends "base.html" %}{% set title = "Unknown visitors" %}{% set header_title = "Photos of people the camera did not know" %}
+{% block top_extra %}{% set n = alerts|selectattr('status', 'ne', 'Resolved')|list|length %}
+{% if n %}<form method="POST" action="{{ url_for('resolve_all_alerts') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm"><svg class="i"><use href="#i-check"/></svg>Mark all resolved</button></form>{% endif %}{% endblock %}
+{% block content %}
+<div class="toolbar"><div class="chips" role="group" aria-label="Filter alerts">
+  <button class="chip" data-f="all" aria-pressed="true">All ({{ alerts|length }})</button>
+  <button class="chip" data-f="New" aria-pressed="false">Needs review ({{ alerts|selectattr('status', 'ne', 'Resolved')|list|length }})</button>
+  <button class="chip" data-f="Resolved" aria-pressed="false">Resolved</button></div></div>
+<div class="alerts-grid" id="grid">
+{% for a in alerts %}
+  <article class="card alert-card" data-status="{{ 'Resolved' if a.status == 'Resolved' else 'New' }}">
+    <div class="vf" data-zoom="/CollectedImages/{{ a.image_path }}"><span class="vf-b"></span><img loading="lazy" src="/CollectedImages/{{ a.image_path }}" alt="Unknown visitor captured {{ a.time }}"></div>
+    <div class="body"><div class="row between"><h3>Unknown visitor</h3><span class="badge {{ 'ok' if a.status == 'Resolved' else 'warn' }}">{{ 'Resolved' if a.status == 'Resolved' else 'Needs review' }}</span></div>
+      <p class="muted small" style="margin:4px 0 12px">{{ a.time }}</p>
+      <div class="row">
+        {% if a.status != 'Resolved' %}<form method="POST" action="{{ url_for('resolve_alert', alert_id=a.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm">Mark resolved</button></form>{% endif %}
+        <form method="POST" action="{{ url_for('delete_alert', alert_id=a.id) }}" data-confirm="The photo is deleted permanently." data-confirm-title="Delete this alert?" data-confirm-yes="Delete"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-danger btn-sm" aria-label="Delete alert"><svg class="i"><use href="#i-trash"/></svg></button></form>
+      </div></div>
+  </article>
+{% endfor %}
+</div>
+<div class="card empty" id="none" {% if alerts %}hidden{% endif %}><b>No unknown visitors</b>When a stranger stays in front of the camera, their photo shows up here.</div>
+<div class="modal" id="zoom"><div class="modal-box wide"><img id="zoomImg" alt="" style="width:100%;border-radius:10px;display:block"></div></div>
+{% endblock %}
+{% block scripts %}
+<script>
+const cards=[...document.querySelectorAll('.alert-card')], none=document.getElementById('none');
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{document.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===c));
+  let shown=0; cards.forEach(k=>{const ok=c.dataset.f==='all'||k.dataset.status===c.dataset.f;k.hidden=!ok;shown+=ok}); none.hidden=shown>0;});
+const z=document.getElementById('zoom');
+document.querySelectorAll('[data-zoom]').forEach(v=>v.onclick=()=>{document.getElementById('zoomImg').src=v.dataset.zoom;z.classList.add('open')});
+z.onclick=()=>z.classList.remove('open'); document.addEventListener('keydown',e=>{if(e.key==='Escape')z.classList.remove('open')});
+</script>
+{% endblock %}

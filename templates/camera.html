@@ -1,0 +1,56 @@
+{% extends "base.html" %}{% set title = "Live camera" %}{% set header_title = "Real-time monitoring" %}
+{% block content %}
+<div class="grid g-cam">
+  <section class="card" style="padding:12px">
+    <div class="vf" id="stage" style="aspect-ratio:16/9"><span class="vf-b"></span>
+      <div class="vf-hud"><span><span class="rec">●</span> <span id="state">Connecting</span></span><span id="clock" class="num"></span></div>
+      <img id="feed" alt="Live camera feed" style="object-fit:contain">
+    </div>
+    <div class="row wrap" style="padding:14px 6px 4px">
+      <button class="btn btn-primary" id="start"><svg class="i"><use href="#i-play"/></svg>Start feed</button>
+      <button class="btn" id="stop"><svg class="i"><use href="#i-stop"/></svg>Stop feed</button>
+      <button class="btn" id="snap"><svg class="i"><use href="#i-snap"/></svg>Save snapshot</button>
+      <button class="btn" id="full"><svg class="i"><use href="#i-expand"/></svg>Full screen</button>
+    </div>
+  </section>
+  <aside class="stack">
+    <section class="card">
+      <div class="card-head"><div><h3>Right now</h3><p>Refreshes every 2 seconds</p></div></div>
+      <div class="stack" style="gap:0">
+        <div class="row between" style="padding:11px 0;border-bottom:1px solid var(--line)"><span class="muted">Faces in view</span><b class="num" id="faces">0</b></div>
+        <div class="row between" style="padding:11px 0;border-bottom:1px solid var(--line)"><span class="muted">Recognised</span><b id="people" style="text-align:right">None</b></div>
+        <div class="row between" style="padding:11px 0;border-bottom:1px solid var(--line)"><span class="muted">Speed</span><b class="num"><span id="fps">0</span> fps</b></div>
+        <div class="row between" style="padding:11px 0"><span class="muted">Last alert</span><b id="last">None this session</b></div>
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-head"><div><h3>Unknown visitor timer</h3><p>An alert is sent when this reaches {{ unknown_seconds }} seconds</p></div><b class="num" id="ut">0s</b></div>
+      <div class="progress"><i id="ubar"></i></div>
+      <p class="muted small" style="margin-top:14px">The timer resets when a known person appears or the face leaves the frame. After an alert the camera waits before sending another.</p>
+    </section>
+    <section class="card" id="errbox" hidden><span class="badge bad">Camera problem</span><p class="small" style="margin-top:10px" id="errtxt"></p></section>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const feed=document.getElementById('feed'), LIMIT={{ unknown_seconds }};
+const $=id=>document.getElementById(id); let on=false;
+function start(){feed.src='/api/video_feed?t='+Date.now(); on=true; $('state').textContent='Live'}
+function stop(){feed.removeAttribute('src'); on=false; $('state').textContent='Stopped'}
+$('start').onclick=start; $('stop').onclick=stop; start();
+$('full').onclick=()=>{const s=$('stage'); (document.fullscreenElement?document.exitFullscreen():s.requestFullscreen()).catch(()=>{})};
+$('snap').onclick=()=>{ if(!feed.naturalWidth){toast('Start the feed first.','bad');return}
+  const c=document.createElement('canvas'); c.width=feed.naturalWidth; c.height=feed.naturalHeight; c.getContext('2d').drawImage(feed,0,0);
+  const a=document.createElement('a'); a.href=c.toDataURL('image/jpeg',.92); a.download='snapshot_'+new Date().toISOString().replace(/[:.]/g,'-')+'.jpg'; a.click(); toast('Snapshot saved to your downloads.','ok')};
+setInterval(()=>$('clock').textContent=new Date().toLocaleTimeString(),1000);
+async function poll(){ if(!on) return;
+  try{const s=await (await fetch('/api/camera_status')).json();
+    $('faces').textContent=s.faces; $('fps').textContent=s.fps; $('people').textContent=s.people.length?s.people.join(', '):'None';
+    $('last').textContent=s.last_alert||'None this session'; $('ut').textContent=Math.round(s.unknown_for)+'s';
+    const p=Math.min(100,s.unknown_for/LIMIT*100); $('ubar').style.width=p+'%'; $('ubar').style.background=p>66?'var(--bad)':'var(--warn)';
+    $('errbox').hidden=!s.error; $('errtxt').textContent=s.error||'';}catch(e){}
+}
+setInterval(poll,2000);
+</script>
+{% endblock %}

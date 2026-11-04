@@ -1,0 +1,64 @@
+{% extends "base.html" %}{% set title = "Dashboard" %}{% set header_title = "Security overview" %}
+{% block top_extra %}<a class="btn btn-primary btn-sm" href="{{ url_for('camera') }}"><svg class="i"><use href="#i-camera"/></svg>Open live camera</a>{% endblock %}
+{% block content %}
+<div class="grid g-stats" style="margin-bottom:18px">
+  <article class="card stat"><div class="label">Authorized people<svg class="i"><use href="#i-users"/></svg></div><div class="value num" id="s-users">{{ user_count }}</div><div class="sub">Enrolled for recognition</div></article>
+  <article class="card stat {{ 'warn' if unknown_count }}"><div class="label">Unreviewed alerts<svg class="i"><use href="#i-alert"/></svg></div><div class="value num" id="s-alerts">{{ unknown_count }}</div><div class="sub"><span id="s-alerts-today">{{ alerts_today }}</span> new today</div></article>
+  <article class="card stat"><div class="label">Entries today<svg class="i"><use href="#i-check"/></svg></div><div class="value num" id="s-entries">{{ entries_today }}</div><div class="sub">Recognised people</div></article>
+  <article class="card stat"><div class="label">Camera<svg class="i"><use href="#i-camera"/></svg></div>
+    <div class="value" style="font-size:24px;margin-top:14px"><span class="badge {{ 'ok' if camera.running else '' }}" id="s-cam"><span class="dot {{ 'pulse' if camera.running }}"></span><span id="s-cam-t">{{ 'Watching' if camera.running else 'Idle' }}</span></span></div>
+    <div class="sub" style="margin-top:8px" id="s-cam-sub">{{ 'Starts when you open Live camera' if not camera.running else camera.fps ~ ' frames per second' }}</div></article>
+</div>
+<div class="grid g-main">
+  <section class="card">
+    <div class="card-head"><div><h3>Activity, last 7 days</h3><p>Recognised entries compared with unknown-visitor alerts</p></div>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Entries</span><span><i style="background:var(--warn)"></i>Alerts</span></div></div>
+    <svg class="chart" id="chart" viewBox="0 0 640 210" preserveAspectRatio="none" role="img" aria-label="Bar chart of entries and alerts for the last 7 days"></svg>
+  </section>
+  <section class="card">
+    <div class="card-head"><div><h3>Quick actions</h3><p>Common jobs</p></div></div>
+    <div class="stack">
+      <a class="btn btn-ghost" href="{{ url_for('users') }}"><svg class="i"><use href="#i-plus"/></svg>Add an authorized person</a>
+      <a class="btn btn-ghost" href="{{ url_for('alerts') }}"><svg class="i"><use href="#i-alert"/></svg>Review unknown visitors</a>
+      <a class="btn btn-ghost" href="{{ url_for('export_logs') }}"><svg class="i"><use href="#i-download"/></svg>Download logs as CSV</a>
+    </div>
+  </section>
+</div>
+<section class="card" style="margin-top:18px">
+  <div class="card-head"><div><h3>Recent activity</h3><p>Updates every 10 seconds</p></div><a class="btn btn-ghost btn-sm" href="{{ url_for('logs') }}">View all</a></div>
+  <div class="tscroll"><table><thead><tr><th>Person</th><th>Time</th><th>Event</th><th>Details</th></tr></thead><tbody id="recent"></tbody></table></div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+const BADGE = {'Authorized Entry':'ok','Alert':'warn','Admin Action':'info'};
+let data = {{ {'series': series, 'recent': recent}|tojson }};
+function drawChart(series){
+  const svg=document.getElementById('chart'), W=640,H=210,pl=28,pb=26,pt=10, max=Math.max(4,...series.map(d=>Math.max(d.entries,d.alerts)));
+  const step=(W-pl)/series.length, bw=Math.min(22,step/3), ch=H-pb-pt; let h='';
+  for(let i=0;i<=4;i++){const y=pt+ch-ch*i/4;h+=`<line class="grid-l" x1="${pl}" x2="${W}" y1="${y}" y2="${y}"/><text x="0" y="${y+4}">${Math.round(max*i/4)}</text>`}
+  series.forEach((d,i)=>{const cx=pl+step*i+step/2, e=ch*d.entries/max, a=ch*d.alerts/max;
+    h+=`<rect x="${cx-bw-2}" y="${pt+ch-e}" width="${bw}" height="${e}" rx="3" fill="var(--accent)"><title>${d.label}: ${d.entries} entries</title></rect>`;
+    h+=`<rect x="${cx+2}" y="${pt+ch-a}" width="${bw}" height="${a}" rx="3" fill="var(--warn)"><title>${d.label}: ${d.alerts} alerts</title></rect>`;
+    h+=`<text x="${cx}" y="${H-8}" text-anchor="middle">${d.label}</text>`});
+  svg.innerHTML=h;
+}
+function drawRecent(rows){
+  const tb=document.getElementById('recent'); tb.textContent='';
+  if(!rows.length){tb.innerHTML='<tr><td colspan="4"><div class="empty"><b>No activity yet</b>Open the live camera or add a person to get started.</div></td></tr>';return}
+  rows.forEach(r=>{const tr=document.createElement('tr');
+    [r.person,r.time,null,r.details].forEach((v,i)=>{const td=document.createElement('td');
+      if(i===2){const b=document.createElement('span');b.className='badge '+(BADGE[r.type]||'');b.textContent=r.type;td.appendChild(b)}
+      else{td.textContent=v||'';if(i===0)td.style.fontWeight=600;else td.className='muted'}tr.appendChild(td)});tb.appendChild(tr)});
+}
+drawChart(data.series); drawRecent(data.recent);
+async function refresh(){
+  try{const r=await fetch('/api/stats'); if(!r.ok) return; const d=await r.json();
+    s_users.textContent=d.user_count; s_alerts.textContent=d.unknown_count; s_alerts_today.textContent=d.alerts_today; s_entries.textContent=d.entries_today;
+    const c=d.camera; s_cam.className='badge '+(c.running?'ok':''); s_cam_t.textContent=c.running?'Watching':'Idle';
+    s_cam_sub.textContent=c.running?(c.fps+' frames per second'):'Starts when you open Live camera';
+    drawChart(d.series); drawRecent(d.recent);}catch(e){}
+}
+setInterval(()=>{if(!document.hidden)refresh()},10000);
+</script>
+{% endblock %}

@@ -1,0 +1,1 @@
+{% for cat, msg in get_flashed_messages(with_categories=true) %}<span hidden data-flash="{{ msg }}" data-kind="{{ cat }}"></span>{% endfor %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% set title = "My profile" %}{% set header_title = "Administrator profile" %}
+{% block content %}
+<div class="grid" style="max-width:860px;margin:0 auto">
+  <section class="card">
+    <div class="card-head"><div><h3>Personal details</h3><p>Member since {{ admin.joined }}. Username and email cannot be changed here.</p></div><span class="badge ok">Active admin</span></div>
+    <form method="POST" action="{{ url_for('profile') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="details">
+      <div class="f2"><div class="field"><label for="a">Full name</label><input id="a" name="full_name" value="{{ admin.full_name }}" required></div>
+        <div class="field"><label for="b">Username</label><input id="b" value="{{ admin.username }}" disabled></div></div>
+      <div class="f2"><div class="field"><label for="c">Email</label><input id="c" value="{{ admin.email }}" disabled></div>
+        <div class="field"><label for="d">Phone</label><input id="d" name="phone" value="{{ admin.phone }}"></div></div>
+      <div class="f3"><div class="field"><label for="e">Gender</label><input id="e" value="{{ admin.gender }}" disabled></div>
+        <div class="field"><label for="f">Profession</label><input id="f" name="profession" value="{{ admin.profession }}"></div>
+        <div class="field"><label for="g">Date of birth</label><input id="g" value="{{ admin.dob }}" disabled></div></div>
+      <button class="btn btn-primary" type="submit">Save changes</button>
+    </form>
+  </section>
+  <section class="card">
+    <div class="card-head"><div><h3>Change password</h3><p>You stay logged in on this device</p></div></div>
+    <form method="POST" action="{{ url_for('profile') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="password">
+      <div class="f2"><div class="field"><label for="cp">Current password</label><input id="cp" name="current_password" type="password" required autocomplete="current-password"></div>
+        <div class="field"><label for="np">New password</label><input id="np" name="new_password" type="password" required autocomplete="new-password" data-pw-meter="#m3"><div class="meter" id="m3"><i></i></div><p class="hint">Use 8+ characters with a letter and a number.</p></div></div>
+      <button class="btn" type="submit">Update password</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

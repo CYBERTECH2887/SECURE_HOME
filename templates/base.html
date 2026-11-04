@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>{% include '_head.html' %}<title>{{ title }} · SecureHome</title></head>
+<body>
+{% include '_icons.html' %}
+<aside class="sidebar" aria-label="Main navigation">
+  <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark"><svg class="i"><use href="#i-shield"/></svg></span>Secure<b>Home</b></a>
+  <nav class="nav">
+    <a class="{{ 'on' if request.endpoint == 'dashboard' }}" href="{{ url_for('dashboard') }}"><svg class="i"><use href="#i-home"/></svg>Dashboard</a>
+    <a class="{{ 'on' if request.endpoint == 'camera' }}" href="{{ url_for('camera') }}"><svg class="i"><use href="#i-camera"/></svg>Live camera</a>
+    <a class="{{ 'on' if request.endpoint == 'users' }}" href="{{ url_for('users') }}"><svg class="i"><use href="#i-users"/></svg>Authorized people</a>
+    <a class="{{ 'on' if request.endpoint == 'alerts' }}" href="{{ url_for('alerts') }}"><svg class="i"><use href="#i-alert"/></svg>Unknown visitors{% if new_alerts %}<span class="count">{{ new_alerts }}</span>{% endif %}</a>
+    <a class="{{ 'on' if request.endpoint == 'logs' }}" href="{{ url_for('logs') }}"><svg class="i"><use href="#i-log"/></svg>Security logs</a>
+    <a class="{{ 'on' if request.endpoint == 'profile' }}" href="{{ url_for('profile') }}"><svg class="i"><use href="#i-user"/></svg>My profile</a>
+  </nav>
+  <div class="side-foot">
+    <span class="row"><span class="dot pulse" style="color:var(--ok)"></span>{{ session.get('admin_name', 'Admin') }}</span>
+    <a href="{{ url_for('logout') }}"><svg class="i"><use href="#i-logout"/></svg>Log out</a>
+  </div>
+</aside>
+<div class="main">
+  <header class="top">
+    <div class="row">
+      <button class="btn btn-ghost icon-btn menu-btn" aria-label="Open menu"><svg class="i"><use href="#i-menu"/></svg></button>
+      <div><p class="crumb">{{ title }}</p><h1>{{ header_title }}</h1></div>
+    </div>
+    <div class="row">{% block top_extra %}{% endblock %}<button class="btn btn-ghost icon-btn" data-theme-toggle></button></div>
+  </header>
+  <main class="content">{% block content %}{% endblock %}</main>
+  <footer class="foot">SecureHome &copy; {{ year }} · Built by Md Sakir Jalal · <a href="mailto:shakirjalal44@gmail.com" style="color:var(--accent)">shakirjalal44@gmail.com</a></footer>
+</div>
+<div class="modal" id="confirmModal" role="dialog" aria-modal="true"><div class="modal-box">
+  <h3 data-title>Are you sure?</h3><p class="muted" data-text></p>
+  <div class="modal-actions"><button class="btn" data-no>Cancel</button><button class="btn btn-danger" data-yes>Confirm</button></div>
+</div></div>
+{% include '_flash.html' %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body></html>

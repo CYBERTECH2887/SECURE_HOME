@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>{% include '_head.html' %}<title>{{ title }} · SecureHome</title></head>
+<body>
+{% include '_icons.html' %}
+<div class="auth">
+  <section class="auth-art">
+    <a class="brand" href="{{ url_for('index') }}" style="padding:0"><span class="brand-mark"><svg class="i"><use href="#i-shield"/></svg></span>Secure<b>Home</b></a>
+    <div>
+      <h2>{% block art_title %}Know who is at your door.{% endblock %}</h2>
+      <p class="muted">{% block art_text %}Recognition runs on your own computer. Your family's faces never leave your home network.{% endblock %}</p>
+      <div class="demo vf"><span class="vf-b"></span>
+        <div class="face" style="left:16%;top:22%;width:26%;height:46%;border-color:var(--ok)"><span class="tag" style="background:var(--ok)">Family member · 96%</span></div>
+        <div class="face" style="left:60%;top:30%;width:22%;height:40%;border-color:var(--bad)"><span class="tag" style="background:var(--bad)">Unknown · 9s</span></div>
+      </div>
+    </div>
+    <p class="muted small">Face recognition with OpenCV and ArcFace</p>
+  </section>
+  <section class="auth-panel">
+    <div class="auth-card">
+      <div class="row between" style="margin-bottom:26px">
+        <a href="{{ url_for('index') }}" class="btn btn-ghost btn-sm">Back to home</a>
+        <button class="btn btn-ghost icon-btn" data-theme-toggle></button>
+      </div>
+      {% block form %}{% endblock %}
+    </div>
+  </section>
+</div>
+{% include '_flash.html' %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body></html>

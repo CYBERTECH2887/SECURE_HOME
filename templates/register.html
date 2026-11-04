@@ -1,0 +1,37 @@
+{% extends "auth_base.html" %}{% set title = "Create workspace" %}
+{% block art_title %}Set up your home in two minutes.{% endblock %}
+{% block art_text %}Create an admin account, add the people who live with you, and SecureHome will email you a photo when a stranger lingers at the camera.{% endblock %}
+{% block form %}
+{% set f = form or {} %}
+<h2>Create your workspace</h2>
+<p class="muted lead">{% if show_otp_box %}We sent a 6-digit code to <b>{{ email }}</b>. It works for 10 minutes.{% else %}You will confirm your email with a code in the next step.{% endif %}</p>
+{% if error %}<div class="flash bad" role="alert">{{ error }}</div>{% endif %}
+<form method="POST" action="{{ url_for('register') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  {% if show_otp_box %}
+  <input type="hidden" name="action" value="verify_and_register">
+  <div class="field"><label for="o">6-digit code</label><input id="o" name="otp" required maxlength="6" inputmode="numeric" autocomplete="one-time-code" autofocus style="letter-spacing:6px;text-align:center;font-size:20px"></div>
+  <button class="btn btn-primary btn-block" type="submit">Verify and create workspace</button>
+  {% else %}
+  <input type="hidden" name="action" value="send_otp">
+  <div class="f2">
+    <div class="field"><label for="fn">Full name</label><input id="fn" name="fullname" required value="{{ f.fullname }}"></div>
+    <div class="field"><label for="un">Username</label><input id="un" name="username" required autocomplete="username" value="{{ f.username }}"></div>
+  </div>
+  <div class="f2">
+    <div class="field"><label for="em">Email</label><input id="em" type="email" name="email" required value="{{ f.email }}"></div>
+    <div class="field"><label for="ph">Phone</label><input id="ph" name="phone" required value="{{ f.phone }}"></div>
+  </div>
+  <div class="f3">
+    <div class="field"><label for="ge">Gender</label><select id="ge" name="gender" required><option value="">Select</option>{% for g in ['Male','Female','Other'] %}<option {{ 'selected' if f.gender == g }}>{{ g }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="pr">Profession</label><input id="pr" name="profession" required value="{{ f.profession }}"></div>
+    <div class="field"><label for="db">Date of birth</label><input id="db" type="date" name="dob" required value="{{ f.dob }}"></div>
+  </div>
+  <div class="field"><label for="pw">Password</label>
+    <div class="pw"><input id="pw" name="password" type="password" required autocomplete="new-password" data-pw-meter="#m2"><button type="button" data-pw-toggle="pw" aria-label="Show password"><svg class="i"><use href="#i-eye"/></svg></button></div>
+    <div class="meter" id="m2"><i></i></div><p class="hint">Use 8+ characters with a letter and a number.</p></div>
+  <button class="btn btn-primary btn-block" type="submit">Send verification code</button>
+  {% endif %}
+</form>
+<p class="muted small" style="margin-top:22px;text-align:center">Already have a workspace? <a href="{{ url_for('login') }}" style="color:var(--accent);font-weight:600">Log in</a></p>
+{% endblock %}
